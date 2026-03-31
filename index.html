@@ -3,39 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>悬置路由 MVP</title>
+    <title>启动中</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
-        a { color: #0366d6; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .nav { margin-bottom: 2rem; border-bottom: 1px solid #eaecef; padding-bottom: 1rem; }
-        .loading { color: #666; font-style: italic; }
-        .error { color: #d73a49; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .progress-ring { width: 80px; height: 80px; }
+        .progress-ring__circle { stroke: rgba(255,255,255,0.3); stroke-width: 4; fill: none; }
+        .progress-ring__indicator {
+            stroke: #fff; stroke-width: 4; stroke-linecap: round; fill: none;
+            stroke-dasharray: 200; stroke-dashoffset: 200;
+            animation: progress 1.5s ease-in-out infinite;
+        }
+        @keyframes progress { 0% { stroke-dashoffset: 200; } 50% { stroke-dashoffset: 50; } 100% { stroke-dashoffset: 200; } }
+        .progress-ring { animation: rotate 2s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="nav">
-        <a href="/">首页</a> | 
-        <a href="/user/1">用户1</a> | 
-        <a href="/user/2">用户2</a> | 
-        <a href="/user/3">用户3</a>
-    </div>
-    <div id="app">
-        <!-- 初始内容将由 SW 动态填充，但用户首次访问时 SW 尚未激活，会先看到这个 fallback -->
-        <p>页面加载中，首次访问需稍等片刻（Service Worker 安装中）...</p>
-    </div>
-
+    <svg class="progress-ring" viewBox="0 0 80 80">
+        <circle class="progress-ring__circle" cx="40" cy="40" r="34" />
+        <circle class="progress-ring__indicator" cx="40" cy="40" r="34" />
+    </svg>
     <script>
-        // 注册 Service Worker
+        const isInitialLoad = !navigator.serviceWorker?.controller;
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => {
-                    console.log('SW registered: ', reg);
-                    // 可选：发送消息动态更新路由（此处省略，使用预定义路由）
-                })
-                .catch(err => console.error('SW registration failed: ', err));
-        } else {
-            document.getElementById('app').innerHTML = '<p class="error">当前浏览器不支持 Service Worker，无法体验悬置路由。</p>';
+            navigator.serviceWorker.register('/sw.js').catch(console.error);
+            navigator.serviceWorker.addEventListener('message', event => {
+                if (event.data.type === 'ACTIVATED' && isInitialLoad) location.reload();
+            });
         }
     </script>
 </body>
